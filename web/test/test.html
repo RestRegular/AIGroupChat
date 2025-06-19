@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        /* 整体页面布局 */
+        body {
+            margin: 0;
+            padding: 0;
+        }
+
+        /* 侧边栏样式 */
+        #sidebar {
+            width: 64px;
+            height: 100vh;
+            background-color: white;
+            border-right: 1px solid #ccc;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transition: left 0.3s ease-in-out;
+        }
+
+        /* 侧边栏隐藏类 */
+        .sidebar-hidden {
+            left: -64px;
+        }
+
+        /* 隐藏按钮样式 */
+        #toggle-sidebar {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background-color: #f9f9f9;
+            border: none;
+            border-radius: 50%;
+            padding: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+<!-- 隐藏按钮 -->
+<button id="toggle-sidebar">
+    <i class="fa fa-bars"></i>
+</button>
+
+<!-- 左侧边栏 -->
+<div id="sidebar" class="sidebar-slide transform-transition duration-300">
+    <!-- 侧边栏头部 -->
+    <div class="p-4 border-b border-gray-200 flex justify-between items-center">
+        <h2 class="font-semibold text-lg">聊天列表</h2>
+    </div>
+    <!-- 新建聊天和AI选择等内容 -->
+    ...
+</div>
+
+<script>
+    // 获取侧边栏和隐藏按钮元素
+    const sidebar = document.getElementById('sidebar');
+    const toggleButton = document.getElementById('toggle-sidebar');
+
+    // 监听按钮点击事件
+    toggleButton.addEventListener('click', function () {
+        sidebar.classList.toggle('sidebar-hidden');
+    });
+</script>
+</body>
+
+</html>

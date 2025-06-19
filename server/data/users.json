@@ -1,0 +1,12 @@
+{
+    "R": {
+        "username": "R",
+        "password": "123",
+        "email": "123",
+        "data": {
+            "ais": {},
+            "groups": {},
+            "sessionHistory": []
+        }
+    }
+}
