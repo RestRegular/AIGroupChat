@@ -1,5 +1,5 @@
 const axios = require('axios');
-const {log, error, warn, getTimeStr} = require('./log_system')
+const {rlog, rerror, rwarn, getTimeStr} = require('./log_system')
 const {json} = require("express");
 const fs = require("node:fs");
 const path = require("path");
@@ -54,28 +54,28 @@ function addAI(req, callbacks) {
     };
     fs.readFile(path.join(__dirname, '..', '/data', '/users.json'), 'utf8', (err, data) => {
         if (err) {
-            error(err);
+            rerror(err);
             return callbacks.failed();
         }
         try {
             const usersData = JSON.parse(data);
             const userData = usersData[username];
             if (userData.data.ais[name]) {
-                error(`AI name [${name}] duplicated.`);
+                rerror(`AI name [${name}] duplicated.`);
                 return callbacks.failed();
             }
             userData.data.ais[name] = ai;
             usersData[username] = userData;
             fs.writeFile(path.join(__dirname, '..', '/data', '/users.json'), JSON.stringify(usersData, null, 4), 'utf8', (err) => {
                 if (err) {
-                    error(err);
+                    rerror(err);
                     return callbacks.failed();
                 }
-                log(`Added AI [${name}]`);
+                rlog(`Added AI [${name}]`);
                 return callbacks.success();
             });
         } catch (e) {
-            error(e);
+            rerror(e);
             return callbacks.failed();
         }
     })
@@ -84,7 +84,7 @@ function addAI(req, callbacks) {
 function getAIResponse(username, aiName, msgs, callbacks) {
     fs.readFile(path.join(__dirname, '..', '/data', '/users.json'), 'utf8', async (err, data) => {
         if (err) {
-            error(err);
+            rerror(err);
             return;
         }
         let usersData
@@ -111,7 +111,7 @@ function getAIResponse(username, aiName, msgs, callbacks) {
 function deleteAI(username, aiName, callbacks) {
     fs.readFile(path.join(__dirname, '..', '/data', '/users.json'), 'utf8', (err, data) => {
         if (err) {
-            error(err);
+            rerror(err);
             return callbacks.failed();
         }
         try {
@@ -121,14 +121,14 @@ function deleteAI(username, aiName, callbacks) {
             usersData[username] = userData;
             fs.writeFile(path.join(__dirname, '..', '/data', '/users.json'), JSON.stringify(usersData, null, 4), 'utf8', (err) => {
                 if (err) {
-                    error(err);
+                    rerror(err);
                     return callbacks.failed();
                 }
-                log(`Deleted AI [${aiName}]`);
+                rlog(`Deleted AI [${aiName}]`);
                 return callbacks.success();
             })
         } catch (e) {
-            error(e);
+            rerror(e);
             return callbacks.failed();
         }
     });

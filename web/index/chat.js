@@ -77,7 +77,7 @@ function sendMessage() {
     typingIndicator.classList.remove('hidden');
 
     // 获取AI回复内容
-    fetch(serverURL + "/chat", {
+    fetch(apiURL + "/chat", {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

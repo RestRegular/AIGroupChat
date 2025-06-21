@@ -3,8 +3,10 @@ const cookieParser = require('cookie-parser');
 const fs = require('fs');
 const path = require('path');
 const {addAI, getAIResponse, deleteAI} = require("./module/ai_req.js");
-const {log, warn, error, getTimeStr} = require("./module/log_system.js");
+const {rlog, rwarn, rerror, getTimeStr} = require("./module/log_system.js");
 const {validateCookie, parseMarkdown} = require("./module/utils.js");
+const {sendVerificationEmail, verifyCode} = require("./module/email");
+const {varifyCodeRouter, checkCookies} = require("./module/routers");
 
 const app = express();
 
@@ -14,23 +16,43 @@ app.use(cookieParser());
 
 // 中间件：记录所有请求
 app.use((req, res, next) => {
-    log(`${req.method} ${req.path}`)
+    rlog(`${req.method} ${req.path}`)
     next();
 });
 
 // 静态文件处理
 app.use(express.static('D:\\ClionProjects\\ai_group_chat\\web\\index'));
 
+// 添加中间件
+app.use('/api', checkCookies);
+
 app.get('/', (req, res) => {
     res.sendFile('D:\\ClionProjects\\ai_group_chat\\web\\index\\index.html');
 })
 
-app.post('/api/register', (req, res) => {
+app.post('/send_varification_email', (req, res) => {
+    const {email} = req.body;
+    sendVerificationEmail(email, 5)
+        .then(hasSuccess => {
+            rlog(`send varification email to [${email}] success`)
+            if (hasSuccess) {
+                res.json({status: "success"});
+            } else {
+                res.json({status: "error", cause: "EmailSendError"});
+            }
+        })
+        .catch(err => {
+            rerror(err);
+            res.json({status: "error", cause: "EmailSendError"});
+        })
+})
+
+app.post('/register', varifyCodeRouter, (req, res) => {
     // 暂时使用静态文件处理
-    const {username, password, email, code} = req.body;
+    const {username, password, email} = req.body;
     fs.readFile(path.join(__dirname, '/data', '/users.json'), 'utf8', (err, data) => {
         if (err) {
-            error(err);
+            rerror(err);
             res.json({status: "error", cause: "FileReadError"});
             return;
         }
@@ -52,23 +74,24 @@ app.post('/api/register', (req, res) => {
             };
             fs.writeFile(path.join(__dirname, '/data', '/users.json'), JSON.stringify(usersData, null, 4), (err) => {
                 if (err) {
-                    error(err);
+                    rerror(err);
                     res.json({status: "error", cause: "FileWriteError"});
                     return;
                 }
+                rlog(`[${username}] register success`);
                 res.json({status: "success"});
             })
         } catch (e) {
-            error(e);
+            rerror(e);
             res.json({status: "error", cause: "JSONParseError"});
         }
     })
 })
 
-app.post('/api/login', (req, res) => {
+app.post('/login', (req, res) => {
     fs.readFile(path.join(__dirname, '/data', '/users.json'), 'utf8', (err, data) => {
         if (err) {
-            error(err);
+            rerror(err);
             res.json({status: "error", cause: "FileReadError"});
             return;
         }
@@ -76,7 +99,7 @@ app.post('/api/login', (req, res) => {
             const usersData = JSON.parse(data);
             if (usersData[req.body.username]) {
                 if (usersData[req.body.username].password === req.body.password) {
-                    log(`[${req.body.username}] login success`)
+                    rlog(`[${req.body.username}] login success`)
                     const data = usersData[req.body.username].data;
                     data.ais = Object.fromEntries(Object.entries(data.ais).map(([name, ai]) => {
                         ai.msgs = ai.msgs.map(msg => {
@@ -89,14 +112,14 @@ app.post('/api/login', (req, res) => {
                         sessionData: data
                     });
                 } else {
-                    warn(`[${req.body.username}] login failed`)
+                    rwarn(`[${req.body.username}] login failed`)
                     res.json({status: "error", cause: "PasswordError"});
                 }
             } else {
                 res.json({status: "error", cause: "UnexistNameError"});
             }
         } catch (e) {
-            error(e);
+            rerror(e);
             res.json({status: "error", cause: "JSONParseError"});
         }
     });
@@ -119,7 +142,7 @@ app.post('/api/get_user_data', (req, res) => {
     validateCookie(req, res, () => {
         fs.readFile(path.join(__dirname, '/data', '/users.json'), 'utf8', (err, data) => {
             if (err) {
-                error(err);
+                rerror(err);
                 res.json({status: "error", cause: "FileReadError"});
                 return;
             }
@@ -130,17 +153,17 @@ app.post('/api/get_user_data', (req, res) => {
                     data: usersData[req.cookies.username].data
                 })
             } catch (e) {
-                error(e);
+                rerror(e);
                 res.json({status: "error", cause: "JSONParseError"});
             }
         })
     })
 })
 
-app.post('/chat', (req, res) => {
+app.post('/api/chat', (req, res) => {
     fs.readFile(path.join(__dirname, '/data', '/users.json'), 'utf8', (err, data) => {
         if (err) {
-            error(err);
+            rerror(err);
             res.json({status: "error", cause: "FileReadError"});
             return;
         }
@@ -167,11 +190,11 @@ app.post('/chat', (req, res) => {
                         usersData[req.cookies.username].data.ais[targetAI].msgs = msgs;
                         fs.writeFile(path.join(__dirname, '/data', '/users.json'), JSON.stringify(usersData, null, 4), (err) => {
                             if (err) {
-                                error(err);
+                                rerror(err);
                                 res.json({status: "error", cause: "FileWriteError"});
                                 return;
                             }
-                            log(`[${req.cookies.username}] chat with AI [${targetAI}] success`)
+                            rlog(`[${req.cookies.username}] chat with AI [${targetAI}] success`)
                             res.json({
                                 status: "success",
                                 data: sendMsg
@@ -179,12 +202,12 @@ app.post('/chat', (req, res) => {
                         })
                     },
                     failed: (err) => {
-                        error(err);
+                        rerror(err);
                         res.json({status: "error", cause: JSON.stringify(err)});
                     }
                 })
             } catch (e) {
-                error(e);
+                rerror(e);
                 res.json({status: "error", cause: "ServerError"});
             }
         })
@@ -208,8 +231,8 @@ app.post('/api/edit_ai', (req, res) => {
     validateCookie(req, res, () => {
         fs.readFile(path.join(__dirname, '/data', '/users.json'), 'utf8', (err, data) => {
             if (err) {
-                warn(`[${req.cookies.username}] failed to edit ai [${req.body.oldName}]`)
-                error(err);
+                rwarn(`[${req.cookies.username}] failed to edit ai [${req.body.oldName}]`)
+                rerror(err);
                 res.json({status: "error", cause: "FileReadError"});
                 return;
             }
@@ -228,24 +251,24 @@ app.post('/api/edit_ai', (req, res) => {
                         }
                         fs.writeFile(path.join(__dirname, '/data', '/users.json'), JSON.stringify(usersData, null, 4), (err) => {
                             if (err) {
-                                error(err);
+                                rerror(err);
                                 res.json({status: "error", cause: "FileWriteError"});
                                 return;
                             }
-                            log(`[${req.cookies.username}] edit AI [${req.body.oldName}] success`)
+                            rlog(`[${req.cookies.username}] edit AI [${req.body.oldName}] success`)
                             res.json({status: "success"})
                         })
                     } else {
-                        warn(`[${req.cookies.username}] failed to edit ai [${req.body.oldName}]`)
+                        rwarn(`[${req.cookies.username}] failed to edit ai [${req.body.oldName}]`)
                         res.json({status: "error", cause: "DuplicatedNameError"});
                     }
                 } else {
-                    warn(`[${req.cookies.username}] failed to edit ai [${req.body.oldName}]`)
+                    rwarn(`[${req.cookies.username}] failed to edit ai [${req.body.oldName}]`)
                     res.json({status: "error", cause: "UnexistNameError"});
                 }
             } catch (e) {
-                warn(`[${req.cookies.username}] failed to edit ai [${req.body.oldName}]`)
-                error(e);
+                rwarn(`[${req.cookies.username}] failed to edit ai [${req.body.oldName}]`)
+                rerror(e);
                 res.json({status: "error", cause: "ServerError"});
             }
         })
@@ -259,10 +282,10 @@ app.use((req, res) => {
 
 // 错误处理
 app.use((err, req, res, next) => {
-    error(err.stack);
+    rerror(err.stack);
     res.status(500).send('Something went wrong!');
 });
 
 app.listen(3000, () => {
-    log('Server started on port http://localhost:3000');
+    rlog('Server started on port http://localhost:3000');
 })

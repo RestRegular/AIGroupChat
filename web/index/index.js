@@ -123,7 +123,7 @@ function addSessionBtnEvent(name) {
     elem = document.getElementById(btnId);
     elem.addEventListener('click', (e) => {
         if (confirm(`确定要删除此 AI（${elem.dataset.name}） 吗？`)) {
-            fetch(serverURL + '/api/delete_ai', {
+            fetch(apiURL + '/delete_ai', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -330,7 +330,7 @@ confirmCreateChatBtn.addEventListener('click', () => {
             return;
         }
 
-        fetch(serverURL + '/api/create_ai', {
+        fetch(apiURL + '/create_ai', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -462,7 +462,7 @@ function updateAI(oldAIName, { aiName, apiUrl, modelID, apiKey, sysSet }) {
         delete ais[beforeEditAI.name];
     }
     updateSessionBtn('ai', beforeEditAI.name, aiName);
-    fetch(serverURL + '/api/edit_ai', {
+    fetch(apiURL + '/edit_ai', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'

@@ -1,5 +1,6 @@
 // 全局变量
 const serverURL = "http://localhost:3000";
+const apiURL = serverURL + '/api'
 const profilePath = 'https://picsum.photos/200/200?random=user';
 const ais = {};
 const groups = {};

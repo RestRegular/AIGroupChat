@@ -1,4 +1,4 @@
-const {log} = require("./log_system");
+const {rlog} = require("./log_system");
 const md = require('markdown-it')({
     html: true,        // 允许HTML标签
     linkify: true,     // 自动识别URL

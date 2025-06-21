@@ -10,24 +10,24 @@ function processMsg(msg) {
     return isObject(msg) ? JSON.stringify(msg) : msg
 }
 
-function log(message, role="system") {
+function rlog(message, role="system") {
     console.log(`${getTimeStr()}
     Log(${role}) >> ${processMsg(message)}\n`)
 }
 
-function warn(message, level=1, role="system") {
+function rwarn(message, level=1, role="system") {
     console.warn(`${getTimeStr()}
     Warn(${role}): ${level} >> ${processMsg(message)}\n`)
 }
 
-function error(error, role="system") {
+function rerror(error, role="system") {
     console.error(`${getTimeStr()}
     Error(${role}) >> ${processMsg(error.stack ? error.stack : error)}\n`)
 }
 
 module.exports = {
-    log,
-    warn,
-    error,
+    rlog: rlog,
+    rwarn: rwarn,
+    rerror: rerror,
     getTimeStr
 }

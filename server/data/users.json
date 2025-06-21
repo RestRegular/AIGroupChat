@@ -8,5 +8,35 @@
             "groups": {},
             "sessionHistory": []
         }
+    },
+    "Rest": {
+        "username": "Rest",
+        "password": "197346285",
+        "email": "r3228097751@icloud.com",
+        "data": {
+            "ais": {},
+            "groups": {},
+            "sessionHistory": []
+        }
+    },
+    "Regular": {
+        "username": "Regular",
+        "password": "197346285",
+        "email": "r3228097751@icloud.com",
+        "data": {
+            "ais": {},
+            "groups": {},
+            "sessionHistory": []
+        }
+    },
+    "RestRegular": {
+        "username": "RestRegular",
+        "password": "000000",
+        "email": "r3228097751@icloud.com",
+        "data": {
+            "ais": {},
+            "groups": {},
+            "sessionHistory": []
+        }
     }
 }

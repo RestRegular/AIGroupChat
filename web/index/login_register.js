@@ -22,7 +22,7 @@ function checkCookieValid(){
     const username = getCookie('username');
     if (username && username !== 'null' && username !== 'undefined') {
         hasLogin = true;
-        fetch(serverURL + '/api/get_user_data', {
+        fetch(apiURL + '/get_user_data', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -45,7 +45,7 @@ function checkCookieValid(){
 
 checkCookieValid()
 
-function openAuthPopup() {
+function openAuthPopup(tab="login") {
     if (hasLogin){
         alert('您已登录！无需重复登录或注册。');
         return;
@@ -56,6 +56,11 @@ function openAuthPopup() {
         authContainer.classList.remove('scale-95', 'opacity-0');
         authContainer.classList.add('scale-100', 'opacity-100');
     }, 10);
+    if (tab === 'register') {
+        switchTab(registerTab, loginTab, registerForm, loginForm, loginTabWord, registerTabWord)
+    } else {
+        switchTab(loginTab, registerTab, loginForm, registerForm, registerTabWord, loginTabWord)
+    }
 }
 
 // 隐藏弹窗
@@ -90,8 +95,7 @@ function checkNotLogin() {
     return false;
 }
 function openRegisterPopup() {
-    openAuthPopup();
-    switchTab(registerTab, loginTab, registerForm, loginForm, loginTabWord, registerTabWord)
+    openAuthPopup('register');
 }
 loginTab.addEventListener('click', () => switchTab(loginTab, registerTab, loginForm, registerForm, registerTabWord, loginTabWord));
 registerTab.addEventListener('click', () => switchTab(registerTab, loginTab, registerForm, loginForm, loginTabWord, registerTabWord));
@@ -139,30 +143,56 @@ function resetCodeTimer() {
     getCode.innerHTML = '获取验证码';
 }
 
+function isEmail(email) {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
 // 获取验证码按钮事件
 getCode.addEventListener('click', () => {
     const email = document.getElementById('register-email').value;
-    if (!email) {
-        alert('请先输入邮箱');
+    if (!email || !isEmail(email)) {
+        alert('请先输入正确的邮箱');
         return;
     }
-    startCodeTimer();
-    console.log('发送验证码到:', email); // 实际项目中调用发送验证码API
+    showLoadingStateInButton(getCode);
+    fetch(serverURL + '/send_varification_email', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            email: email
+        })
+    })
+        .then(response => response.json())
+        .then(data => {
+            hideLoadingStateInButton(getCode);
+            if (data.status === 'success') {
+                startCodeTimer();
+            } else {
+                alert('验证码发送失败，请稍后再试');
+            }
+        })
+        .catch(error => {
+            console.error("请求错误：", error);
+            alert('验证码发送失败，请稍后再试');
+            hideLoadingStateInButton(getCode);
+        });
 });
+
+let loadingStateButtonRecord = '';
 
 // 显示/隐藏加载状态
 function showLoadingStateInButton(button) {
     button.disabled = true;
+    loadingStateButtonRecord = button.innerHTML;
     button.innerHTML = '<i class="fa fa-spinner fa-spin mr-2"></i> 处理中...';
 }
 
 function hideLoadingStateInButton(button) {
     button.disabled = false;
-    if (button.id === 'login-btn') {
-        button.innerHTML = '<i class="fa fa-sign-in mr-2"></i> 登录';
-    } else {
-        button.innerHTML = '<i class="fa fa-user-plus mr-2"></i> 注册';
-    }
+    button.innerHTML = loadingStateButtonRecord;
 }
 
 function loadSessionDatas(sessionData) {
@@ -170,6 +200,20 @@ function loadSessionDatas(sessionData) {
         const ai = sessionData.ais[key];
         addAIByObj(ai);
     }
+}
+
+// 显示加载状态
+function showLoadingState() {
+    authBtn.disabled = true;
+    authBtn.classList.add('bg-gray-100');
+    authLoading.classList.remove('opacity-0');
+}
+
+// 隐藏加载状态
+function hideLoadingState() {
+    authBtn.disabled = false;
+    authBtn.classList.remove('bg-gray-100');
+    authLoading.classList.add('opacity-0');
 }
 
 // 登录按钮事件
@@ -183,7 +227,8 @@ document.getElementById('login-btn').addEventListener('click', () => {
     }
 
     showLoadingStateInButton(document.getElementById('login-btn'));
-    fetch(serverURL + '/api/login', {
+    showLoadingState();
+    fetch(serverURL + '/login', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -220,6 +265,7 @@ document.getElementById('login-btn').addEventListener('click', () => {
         })
         .finally(() => {
             hideLoadingStateInButton(document.getElementById('login-btn'));
+            hideLoadingState();
         })
 });
 
@@ -237,7 +283,8 @@ document.getElementById('register-btn').addEventListener('click', () => {
     }
 
     showLoadingStateInButton(document.getElementById('register-btn'));
-    fetch(serverURL + '/api/register', {
+    showLoadingState();
+    fetch(serverURL + '/register', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -258,6 +305,8 @@ document.getElementById('register-btn').addEventListener('click', () => {
             } else if (data.status === 'error') {
                 if (data.cause === "UsernameDuplicated") {
                     alert('用户名已存在，换一个名称试试吧！');
+                } else if (data.cause) {
+                    alert(`注册失败，请稍后重试。\n失败原因：${data.cause}`);
                 } else {
                     alert('注册失败，可能是服务器出现异常，请稍后再试！');
                 }
@@ -268,6 +317,7 @@ document.getElementById('register-btn').addEventListener('click', () => {
         })
         .finally(() => {
             hideLoadingStateInButton(document.getElementById('register-btn'));
+            hideLoadingState();
         })
 });
 
@@ -326,18 +376,4 @@ function closeAuthMenu() {
     authMenu.classList.add('invisible', 'opacity-0', 'translate-y-2');
     authMenu.classList.remove('opacity-100', 'translate-y-0');
     document.removeEventListener('click', closeAuthMenu);
-}
-
-// 显示加载状态
-function showLoadingState() {
-    authBtn.disabled = true;
-    authBtn.classList.add('bg-gray-100');
-    authLoading.classList.remove('opacity-0');
-}
-
-// 隐藏加载状态
-function hideLoadingState() {
-    authBtn.disabled = false;
-    authBtn.classList.remove('bg-gray-100');
-    authLoading.classList.add('opacity-0');
 }
