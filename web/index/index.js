@@ -38,7 +38,7 @@ editTitleInput.addEventListener('keydown', (e) => {
 // 调整输入框高度
 messageInput.addEventListener('input', () => {
     messageInput.style.height = 'auto';
-    let height = Math.min(messageInput.scrollHeight, 120);
+    let height = Math.min(messageInput.scrollHeight, 240);
     height = Math.max(height, 45);
     messageInput.style.height = height + 'px';
 
@@ -113,6 +113,7 @@ function addSessionBtnEvent(name) {
             }
         }
         chatContainer.scrollTop = chatContainer.scrollHeight;
+        updateCodeHighlight();
     })
     btnId = `ai-${name}-session-edit-btn`;
     elem = document.getElementById(btnId);

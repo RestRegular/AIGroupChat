@@ -1,6 +1,7 @@
-function setUserCookie(username, expiresDays = 1) {
+function setUserCookie(username, hours = 0.5) {
     const date = new Date();
-    date.setTime(date.getTime() + (expiresDays * 24 * 60 * 60 * 1000));
+    const outdate = hours * 60 * 60;
+    date.setTime(date.getTime() + (outdate * 1000));
     const expires = "expires=" + date.toUTCString();
     const encodedUsername = encodeURIComponent(username);
     document.cookie = `username=${encodedUsername}; ${expires}; path=/`;
@@ -18,7 +19,7 @@ function deleteAllCookies() {
     }
 }
 
-function checkCookieValid(){
+function cookieVerify(){
     const username = getCookie('username');
     if (username && username !== 'null' && username !== 'undefined') {
         hasLogin = true;
@@ -43,7 +44,7 @@ function checkCookieValid(){
     }
 }
 
-checkCookieValid()
+cookieVerify()
 
 function openAuthPopup(tab="login") {
     if (hasLogin){
@@ -125,7 +126,6 @@ function startCodeTimer() {
     getCode.classList.add('bg-gray-300', 'text-gray-400');
     getCode.innerHTML = '60秒后重新获取';
     secondsLeft = 60;
-
     codeTimer = setInterval(() => {
         secondsLeft--;
         if (secondsLeft > 0) {
@@ -241,7 +241,6 @@ document.getElementById('login-btn').addEventListener('click', () => {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                alert('登录成功');
                 hasLogin = true;
                 setUserCookie(username);
                 loadSessionDatas(data.sessionData);

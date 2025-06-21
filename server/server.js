@@ -4,9 +4,10 @@ const fs = require('fs');
 const path = require('path');
 const {addAI, getAIResponse, deleteAI} = require("./module/ai_req.js");
 const {rlog, rwarn, rerror, getTimeStr} = require("./module/log_system.js");
-const {validateCookie, parseMarkdown} = require("./module/utils.js");
+const {validateCookie, parseMarkdown, parseAisInUserData} = require("./module/utils.js");
 const {sendVerificationEmail, verifyCode} = require("./module/email");
 const {varifyCodeRouter, checkCookies} = require("./module/routers");
+
 
 const app = express();
 
@@ -100,16 +101,9 @@ app.post('/login', (req, res) => {
             if (usersData[req.body.username]) {
                 if (usersData[req.body.username].password === req.body.password) {
                     rlog(`[${req.body.username}] login success`)
-                    const data = usersData[req.body.username].data;
-                    data.ais = Object.fromEntries(Object.entries(data.ais).map(([name, ai]) => {
-                        ai.msgs = ai.msgs.map(msg => {
-                            return {role: msg.role, content: parseMarkdown(msg.content)}
-                        })
-                        return [name, ai];
-                    }));
                     res.json({
                         status: "success",
-                        sessionData: data
+                        sessionData: parseAisInUserData(usersData[req.body.username].data)
                     });
                 } else {
                     rwarn(`[${req.body.username}] login failed`)
@@ -139,24 +133,22 @@ app.post('/api/create_ai', (req, res) => {
 })
 
 app.post('/api/get_user_data', (req, res) => {
-    validateCookie(req, res, () => {
-        fs.readFile(path.join(__dirname, '/data', '/users.json'), 'utf8', (err, data) => {
-            if (err) {
-                rerror(err);
-                res.json({status: "error", cause: "FileReadError"});
-                return;
-            }
-            try {
-                const usersData = JSON.parse(data);
-                res.json({
-                    status: "success",
-                    data: usersData[req.cookies.username].data
-                })
-            } catch (e) {
-                rerror(e);
-                res.json({status: "error", cause: "JSONParseError"});
-            }
-        })
+    fs.readFile(path.join(__dirname, '/data', '/users.json'), 'utf8', (err, data) => {
+        if (err) {
+            rerror(err);
+            res.json({status: "error", cause: "FileReadError"});
+            return;
+        }
+        try {
+            const usersData = JSON.parse(data);
+            res.json({
+                status: "success",
+                data: parseAisInUserData(usersData[req.cookies.username].data)
+            })
+        } catch (e) {
+            rerror(e);
+            res.json({status: "error", cause: "JSONParseError"});
+        }
     })
 })
 

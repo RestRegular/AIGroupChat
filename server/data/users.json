@@ -34,7 +34,38 @@
         "password": "000000",
         "email": "r3228097751@icloud.com",
         "data": {
-            "ais": {},
+            "ais": {
+                "deepseek": {
+                    "url": "https://api.deepseek.com/chat/completions",
+                    "name": "deepseek",
+                    "apikey": "sk-32b084db7ab04cb3a77cb74bd7ab96a4",
+                    "modelID": "deepseek-chat",
+                    "profileUrl": "https://picsum.photos/200/200?random=user",
+                    "sysSet": "",
+                    "msgs": [
+                        {
+                            "role": "user",
+                            "content": "编写一个python的hello world示例代码",
+                            "time": 1750513261478
+                        },
+                        {
+                            "role": "assistant",
+                            "content": "以下是一个简单的 Python \"Hello, World!\" 示例代码：\n\n```python\n# 这是一个经典的Python Hello World程序\nprint(\"Hello, World!\")\n```\n\n运行这个程序时，它会在控制台输出：\n```\nHello, World!\n```\n\n进阶版本（带注释和主函数结构）：\n\n```python\ndef main():\n    \"\"\"主函数\"\"\"\n    # 打印Hello World消息\n    print(\"Hello, World!\")\n\n# 判断是否是直接运行该脚本\nif __name__ == \"__main__\":\n    main()\n```\n\n这个版本包含了：\n1. 函数封装\n2. 文档字符串\n3. Python模块的标准入口检查\n\n两种版本都是完全有效的，简单任务用第一个版本即可，复杂项目推荐使用第二种结构化的写法。",
+                            "time": 1750513269610
+                        },
+                        {
+                            "role": "user",
+                            "content": "再编写一个JavaScript版本",
+                            "time": 1750513329277
+                        },
+                        {
+                            "role": "assistant",
+                            "content": "以下是 JavaScript 的 \"Hello, World!\" 示例代码：\n\n### 1. 最简单的浏览器控制台版本\n```javascript\n// 在浏览器控制台或Node.js中运行\nconsole.log(\"Hello, World!\");\n```\n\n### 2. 浏览器网页显示版本\n```html\n<!DOCTYPE html>\n<html>\n<head>\n    <title>Hello World</title>\n</head>\n<body>\n    <script>\n        // 在网页中显示\n        document.write(\"Hello, World!\");\n        \n        // 或者更现代的写法：\n        // document.body.innerHTML = \"Hello, World!\";\n    </script>\n</body>\n</html>\n```\n\n### 3. Node.js 版本 (保存为 hello.js)\n```javascript\n// 需要在安装Node.js后运行\nfunction sayHello() {\n    return \"Hello, World!\";\n}\n\n// 调用函数并输出\nconsole.log(sayHello());\n```\n\n运行方式：\n```bash\nnode hello.js\n```\n\n### 4. 带ES6特性的现代写法\n```javascript\n// 箭头函数+模板字符串\nconst greet = () => {\n    const recipient = \"World\";\n    return `Hello, ${recipient}!`;\n};\n\nconsole.log(greet());\n```\n\n所有版本都会输出：\n```\nHello, World!\n```\n\n根据使用环境选择：\n- 浏览器调试用 `console.log`\n- 网页显示用 `document.write` 或 DOM操作\n- 服务端用 Node.js 版本\n- 现代项目推荐 ES6 写法",
+                            "time": 1750513345017
+                        }
+                    ]
+                }
+            },
             "groups": {},
             "sessionHistory": []
         }

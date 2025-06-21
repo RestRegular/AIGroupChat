@@ -6,6 +6,8 @@ const ais = {};
 const groups = {};
 let hasLogin = false;
 let beforeEditAI = null;
+let secondsLeft;
+let codeTimer;
 
 // DOM元素
 const sidebar = document.getElementById('sidebar');

@@ -7,7 +7,7 @@ const checkCookies = (req, res, next) => {
     } else {
         return res.json({
             status: "error",
-            cause: "NotLogin"
+            cause: "CookieVerificationFailed"
         });
     }
 }

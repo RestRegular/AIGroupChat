@@ -18,7 +18,22 @@ function parseMarkdown(markdown) {
     return md.render(markdown);
 }
 
+function parseAisInUserData(data) {
+    const ais = [];
+    Object.keys(data.ais).forEach(key => {
+        const ai = data.ais[key];
+        ai.msgs = ai.msgs.map(msg => {
+            msg.content = parseMarkdown(msg.content);
+            return msg;
+        })
+        ais.push(ai);
+    });
+    data.ais = ais;
+    return data;
+}
+
 module.exports = {
     validateCookie,
-    parseMarkdown
+    parseMarkdown,
+    parseAisInUserData
 }

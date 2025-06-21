@@ -2,11 +2,11 @@ tailwind.config = {
     theme: {
         extend: {
             colors: {
-                primary: '#4F46E5', // Ö÷É«µ÷£ºµåÀ¶É«
-                secondary: '#818CF8', // ´ÎÒªÉ«£ºÇ³µåÀ¶É«
-                accent: '#A5B4FC', // Ç¿µ÷É«£º¸üÇ³µÄµåÀ¶É«
-                neutral: '#F3F4F6', // ÖÐÐÔÉ«£ºÇ³»ÒÉ«
-                'neutral-dark': '#374151', // ÉîÉ«ÖÐÐÔÉ«£ºÉî»ÒÉ«
+                primary: '#4F46E5', // ä¸»è‰²è°ƒï¼šé›è“è‰²
+                secondary: '#818CF8', // æ¬¡è¦è‰²ï¼šæµ…é›è“è‰²
+                accent: '#A5B4FC', // å¼ºè°ƒè‰²ï¼šæ›´æµ…çš„é›è“è‰²
+                neutral: '#F3F4F6', // ä¸­æ€§è‰²ï¼šæµ…ç°è‰²
+                'neutral-dark': '#374151', // æ·±è‰²ä¸­æ€§è‰²ï¼šæ·±ç°è‰²
             },
             fontFamily: {
                 inter: ['Inter', 'system-ui', 'sans-serif'],
@@ -14,3 +14,9 @@ tailwind.config = {
         },
     }
 }
+
+document.addEventListener('DOMContentLoaded', (event) => {
+    document.querySelectorAll('pre code').forEach((el) => {
+        hljs.highlightElement(el);
+    });
+});
