@@ -57,8 +57,8 @@ messageInput.addEventListener('keydown', (e) => {
 shareBtn.addEventListener('click', () => {
     if (checkNotLogin()) return;
     shareModal.classList.remove('hidden');
-    shareModal.classList.add('flex');
     document.getElementById('share-title').value = chatTitle.textContent;
+    shareModal.classList.add('flex');
     setTimeout(() => {
         shareContainer.classList.remove('scale-95', 'opacity-0');
         shareContainer.classList.add('scale-100', 'opacity-100');
@@ -69,8 +69,8 @@ function closeShareModal() {
     shareContainer.classList.remove('scale-100', 'opacity-100');
     shareContainer.classList.add('scale-95', 'opacity-0');
     setTimeout(() => {
-        shareModal.classList.add('hidden');
         shareModal.classList.remove('flex');
+        shareModal.classList.add('hidden');
     }, 300);
 }
 
@@ -87,6 +87,32 @@ shareModal.addEventListener('click', (e) => {
 // 初始化
 sendBtn.disabled = true;
 
+function requestAIMsgs(aiName, callback) {
+    fetch(apiURL + '/get_ai_msgs', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+            aiName: aiName
+        })
+    })
+        .then(response => response.json())
+        .then(res => {
+            if (res.status === 'success') {
+                ais[aiName].msgs = res.msgs;
+                callback();
+            } else {
+                console.error('Error:', res.cause);
+                alert(`获取会话数据失败，可能是服务器出现异常，请稍后重试！\n${res.cause}`);
+            }
+        })
+        .catch(err => {
+            console.error("请求错误：", err);
+            alert(`获取会话数据失败，可能是服务器出现异常，请稍后重试！\n${err.message}`);
+        })
+}
+
 // 为会话按钮添加切换会话事件
 function addSessionBtnEvent(name) {
     let btnId = `ai-${name}-session-btn`;
@@ -94,35 +120,45 @@ function addSessionBtnEvent(name) {
     elem.addEventListener('click', (e) => {
         // 更新标题
         const targetAI = elem.dataset.name
-        chatTitle.textContent = targetAI;
-        chatContainer.innerHTML = '';
-        const messages = ais[targetAI].msgs
-        // 更新聊天界面
-        for (const msg of messages) {
-            if (msg.role === 'user') {
-                const {html, _} = getUserMsgHtml(profilePath, getCookie('username'), msg.content, msg.time);
-                chatContainer.insertAdjacentHTML('beforeend', html);
-            } else if (msg.role === 'assistant') {
-                const aiMsgHtml = getAIMsgHtml(ais[targetAI].profileUrl, targetAI, msg.content, msg.time);
-                chatContainer.insertAdjacentHTML('beforeend', aiMsgHtml);
-            } else if (msg.role === 'system') {
-                const systemMsgHtml = getSystemMsgHtml(msg.content);
-                chatContainer.insertAdjacentHTML('beforeend', systemMsgHtml);
+        if (targetAI !== chatTitle.textContent){
+            chatTitle.textContent = targetAI;
+            chatContainer.innerHTML = '<div class="h-[50px]"> </div>';
+            const updateChatScreen = () => {
+                // 更新聊天界面
+                for (const msg of ais[targetAI].msgs) {
+                    if (msg.role === 'user') {
+                        const {html, _} = getUserMsgHtml(profilePath, getCookie('username'), msg.content, msg.time);
+                        chatContainer.insertAdjacentHTML('beforeend', html);
+                    } else if (msg.role === 'assistant') {
+                        const aiMsgHtml = getAIMsgHtml(ais[targetAI].profileUrl, targetAI, msg.content, msg.time);
+                        chatContainer.insertAdjacentHTML('beforeend', aiMsgHtml);
+                    } else if (msg.role === 'system') {
+                        const systemMsgHtml = getSystemMsgHtml(msg.content);
+                        chatContainer.insertAdjacentHTML('beforeend', systemMsgHtml);
+                    } else {
+                        console.error(`Unknown message role: ${msg.role}`);
+                    }
+                }
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+                updateCodeHighlight();
+            }
+            if (!ais[targetAI].msgs) {
+                requestAIMsgs(targetAI, updateChatScreen);
             } else {
-                console.error(`Unknown message role: ${msg.role}`);
+                updateChatScreen();
             }
         }
-        chatContainer.scrollTop = chatContainer.scrollHeight;
-        updateCodeHighlight();
     })
     btnId = `ai-${name}-session-edit-btn`;
     elem = document.getElementById(btnId);
     elem.addEventListener('click', (e) => {
+        e.stopPropagation();
         openModal(elem.dataset.name);
     })
     btnId = `ai-${name}-session-delete-btn`;
     elem = document.getElementById(btnId);
     elem.addEventListener('click', (e) => {
+        e.stopPropagation();
         if (confirm(`确定要删除此 AI（${elem.dataset.name}） 吗？`)) {
             fetch(apiURL + '/delete_ai', {
                 method: 'POST',
@@ -142,24 +178,19 @@ function addSessionBtnEvent(name) {
                             chatContainer.innerHTML = '';
                         }
                         singleAIArea.removeChild(singleAIArea.querySelector(`#ai-${elem.dataset.name}-session-btn`));
-                        alert("删除成功！")
                     } else {
-                        alert(`删除失败，可能是服务器出现异常，请稍后重试！
-Error: ${data.cause}`);
+                        alert(`删除失败，可能是服务器出现异常，请稍后重试！\nError: ${data.cause}`);
                     }
                 })
                 .catch(error => {
-                    alert(`删除失败，可能是服务器出现异常，请稍后重试！\nError: ${JSON.stringify(error)}`);
+                    alert(`删除失败，可能是服务器出现异常，请稍后重试！\nError: ${error.message}`);
                     console.error(error);
                 });
-        }
-        else {
-            alert("已取消删除。")
         }
     })
 }
 
-function addAI(profileUrl, name, url, modelID, apikey, sysSet, msgs) {
+function addAI(profileUrl, name, url, modelID, apikey, sysSet) {
     ais[name] = {
         profileUrl: profileUrl,
         sysSet: sysSet,
@@ -167,15 +198,15 @@ function addAI(profileUrl, name, url, modelID, apikey, sysSet, msgs) {
         apikey: apikey,
         modelID: modelID,
         url: url,
-        msgs: msgs
+        msgs: null
     };
     singleAIArea.insertAdjacentHTML('beforeend', getAICardHtml(name));
     addSessionBtnEvent(name);
 }
 
 function addAIByObj(ai) {
-    const {profileUrl, name, url, modelID, apikey, sysSet, msgs} = ai;
-    addAI(profileUrl, name, url, modelID, apikey, sysSet, msgs);
+    const {profileUrl, name, url, modelID, apikey, sysSet} = ai;
+    addAI(profileUrl, name, url, modelID, apikey, sysSet);
 }
 
 function addGroup(groupName, ais_, sysSet) {
@@ -348,7 +379,6 @@ confirmCreateChatBtn.addEventListener('click', () => {
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    alert("创建成功！");
                     addAI(profilePath, aiName, aiUrl, modelID, apiKey, sysSet, []);
                     (() => {
                         document.getElementById('ai-name').value = '';
@@ -449,20 +479,7 @@ function updateAI(oldAIName, { aiName, apiUrl, modelID, apiKey, sysSet }) {
     if (!modelID) modelID = beforeEditAI.modelID;
     if (!apiKey) apiKey = beforeEditAI.apikey;
     if (!sysSet) sysSet = beforeEditAI.sysSet;
-    document.getElementById(`ai-${beforeEditAI.name}-session-name`).textContent = aiName;
-    ais[aiName] = {
-        name: aiName,
-        url: apiUrl,
-        modelID: modelID,
-        apikey: apiKey,
-        sysSet: sysSet,
-        profileUrl: beforeEditAI.profileUrl,
-        msgs: ais[beforeEditAI.name].msgs
-    };
-    if (beforeEditAI.name !== aiName) {
-        delete ais[beforeEditAI.name];
-    }
-    updateSessionBtn('ai', beforeEditAI.name, aiName);
+    const isDisplayingThis = chatTitle.textContent === oldAIName;
     fetch(apiURL + '/edit_ai', {
         method: 'POST',
         headers: {
@@ -483,8 +500,22 @@ function updateAI(oldAIName, { aiName, apiUrl, modelID, apiKey, sysSet }) {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
+                document.getElementById(`ai-${beforeEditAI.name}-session-name`).textContent = aiName;
+                ais[aiName] = {
+                    name: aiName,
+                    url: apiUrl,
+                    modelID: modelID,
+                    apikey: apiKey,
+                    sysSet: sysSet,
+                    profileUrl: beforeEditAI.profileUrl,
+                    msgs: ais[beforeEditAI.name].msgs
+                };
+                if (beforeEditAI.name !== aiName) {
+                    delete ais[beforeEditAI.name];
+                }
+                updateSessionBtn('ai', beforeEditAI.name, aiName);
+                if (isDisplayingThis) chatTitle.textContent = aiName;
                 beforeEditAI = null;
-                alert("修改成功！");
             } else if (data.status === 'error') {
                 alert(`修改失败，请稍后重试。\n失败原因：${data.cause}`);
             } else {

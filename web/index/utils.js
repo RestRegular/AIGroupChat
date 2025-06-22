@@ -8,6 +8,16 @@ let hasLogin = false;
 let beforeEditAI = null;
 let secondsLeft;
 let codeTimer;
+const availableCodeThemes = [
+    "default", "github", "github-dark", "github-dark-dimmed",
+    "vs", "vs2015", "atom-one-dark", "atom-one-light",
+    "xcode", "xcode-dark", "monokai", "monokai-sublime",
+    "solarized-dark", "solarized-light", "stackoverflow-dark",
+    "stackoverflow-light", "tomorrow-night-blue", "tomorrow-night-bright",
+    "tomorrow-night", "tomorrow", "agate", "an-old-hope",
+    "androidstudio", "arduino-light", "arta", "ascetic",
+    "brown-paper", "codepen-embed", "color-brewer", "dark", "devibeans"
+]
 
 // DOM元素
 const sidebar = document.getElementById('sidebar');

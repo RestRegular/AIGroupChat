@@ -3,6 +3,7 @@ const {rlog, rerror, rwarn, getTimeStr} = require('./log_system')
 const {json} = require("express");
 const fs = require("node:fs");
 const path = require("path");
+const {AIConfig, User} = require("./sql_tool");
 
 function getData(msgs, modelID = "deepseek-chat", maxToken = 2048) {
     return {
@@ -44,94 +45,63 @@ function addAI(req, callbacks) {
     const {profileUrl, sysSet, modelID, name, apikey, url} = req.body;
     const username = req.cookies.username;
     const ai = {
-        url: url,
-        name: name,
-        apikey: apikey,
-        modelID: modelID,
         profileUrl: profileUrl,
         sysSet: sysSet,
-        msgs: []
+        modelID: modelID,
+        name: name,
+        apikey: apikey,
+        url: url
     };
-    fs.readFile(path.join(__dirname, '..', '/data', '/users.json'), 'utf8', (err, data) => {
-        if (err) {
-            rerror(err);
-            return callbacks.failed();
-        }
-        try {
-            const usersData = JSON.parse(data);
-            const userData = usersData[username];
-            if (userData.data.ais[name]) {
-                rerror(`AI name [${name}] duplicated.`);
-                return callbacks.failed();
+
+    AIConfig.create(req.userId, ai)
+        .then(result => {
+            if (result > 0) {
+                callbacks.success();
+            } else {
+                callbacks.failed();
             }
-            userData.data.ais[name] = ai;
-            usersData[username] = userData;
-            fs.writeFile(path.join(__dirname, '..', '/data', '/users.json'), JSON.stringify(usersData, null, 4), 'utf8', (err) => {
-                if (err) {
-                    rerror(err);
-                    return callbacks.failed();
-                }
-                rlog(`Added AI [${name}]`);
-                return callbacks.success();
-            });
-        } catch (e) {
-            rerror(e);
-            return callbacks.failed();
-        }
-    })
+        })
+        .catch(err => {
+            rerror(err);
+            callbacks.failed();
+        });
 }
 
-function getAIResponse(username, aiName, msgs, callbacks) {
-    fs.readFile(path.join(__dirname, '..', '/data', '/users.json'), 'utf8', async (err, data) => {
-        if (err) {
-            rerror(err);
-            return;
-        }
-        let usersData
-        try {
-            usersData = JSON.parse(data);
-            const ais = usersData[username].data.ais;
-            if (!ais[aiName]) {
-                callbacks.failed(new Error(`AI [${aiName}] not found.`));
-            }
-            const ai = ais[aiName];
-            return await axios(getConfig(ai.url, ai.apikey, getData(msgs, ai.modelID)))
-                .then((response) => {
+function getAIResponse(req, aiName, msgs, callbacks) {
+    AIConfig.getByUserIdAndName(req.userId, aiName)
+        .then(async aiConfig => {
+            return await axios(getConfig(aiConfig.url, aiConfig.api_key, getData(msgs, aiConfig.model_id)))
+                .then(response => {
                     callbacks.success(response.data);
                 })
-                .catch((err) => {
+                .catch(err => {
                     callbacks.failed(err);
                 })
-        } catch (e) {
-            callbacks.failed(e);
-        }
-    })
+        })
+        .catch(err => {
+            callbacks.failed(err);
+        });
 }
 
-function deleteAI(username, aiName, callbacks) {
-    fs.readFile(path.join(__dirname, '..', '/data', '/users.json'), 'utf8', (err, data) => {
-        if (err) {
-            rerror(err);
-            return callbacks.failed();
-        }
-        try {
-            const usersData = JSON.parse(data);
-            const userData = usersData[username];
-            delete userData.data.ais[aiName];
-            usersData[username] = userData;
-            fs.writeFile(path.join(__dirname, '..', '/data', '/users.json'), JSON.stringify(usersData, null, 4), 'utf8', (err) => {
-                if (err) {
-                    rerror(err);
-                    return callbacks.failed();
-                }
-                rlog(`Deleted AI [${aiName}]`);
-                return callbacks.success();
-            })
-        } catch (e) {
-            rerror(e);
-            return callbacks.failed();
-        }
-    });
+function deleteAI(req, aiName, callbacks) {
+    AIConfig.getByUserIdAndName(req.userId, aiName)
+        .then(aiConfig => {
+            AIConfig.delete(aiConfig.id)
+                .then(status => {
+                    if (status) {
+                        callbacks.success();
+                    } else {
+                        callbacks.failed();
+                    }
+                })
+                .catch(err => {
+                    rerror(`DeleteAiFailed: ${err}`);
+                    callbacks.failed();
+                });
+        })
+        .catch(err => {
+            rerror(`GetAiConfigFailed: ${err}`);
+        })
 }
 
 module.exports = {

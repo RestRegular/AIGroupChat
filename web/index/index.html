@@ -6,15 +6,168 @@
     <title>AI Chat</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
-    <!--    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet">-->
-<!--    <link href="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/themes/prism.min.css" rel="stylesheet" />-->
+    <link id="hljs-theme" rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
     <link rel="stylesheet" type="text/tailwindcss" href="./index.css">
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .scrollbar-hide {
+                -ms-overflow-style: none;
+                scrollbar-width: none;
+            }
+
+            .scrollbar-hide::-webkit-scrollbar {
+                display: none;
+            }
+
+            .message-appear {
+                animation: messageAppear 0.3s ease-out forwards;
+            }
+
+            .sidebar-slide {
+                transition: transform 0.3s ease-out;
+            }
+
+            .share-popup {
+                animation: sharePopup 0.3s ease-out forwards;
+            }
+
+            .btn-hover {
+                @apply transition-all duration-200 hover:shadow-md active:scale-95;
+            }
+
+            .content-auto {
+                content-visibility: auto;
+            }
+
+            .link-underline {
+                position: relative;
+            }
+
+            .link-underline::after {
+                content: '';
+                position: absolute;
+                width: 0;
+                height: 2px;
+                bottom: -2px;
+                left: 0;
+                background-color: theme('colors.secondary');
+                transition: width 0.3s ease;
+            }
+
+            .link-underline:hover::after {
+                width: 100%;
+            }
+
+            .btn-hover {
+                transition: all 0.3s ease;
+            }
+
+            .btn-hover:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px -5px rgba(79, 70, 229, 0.2);
+            }
+
+            h1, h2, h3, h4, h5, h6 {
+                @apply font-bold text-gray-900 dark:text-white;
+            }
+
+            h1 {
+                @apply text-[clamp(1.5rem,3.5vw,2.5rem)] leading-tight mb-4;
+                letter-spacing: -0.015em;
+            }
+
+            h2 {
+                @apply text-[clamp(1.25rem,2.25vw,1.75rem)] leading-tight mb-3.5;
+                letter-spacing: -0.005em;
+            }
+
+            h3 {
+                @apply text-[clamp(1.125rem,1.75vw,1.5rem)] leading-tight mb-3;
+            }
+
+            h4 {
+                @apply text-[clamp(1rem,1.25vw,1.25rem)] leading-tight mb-2;
+            }
+
+            h5 {
+                @apply text-[clamp(0.9375rem,1vw,1.125rem)] leading-tight mb-1.5;
+            }
+
+            h6 {
+                @apply text-[clamp(0.875rem,0.875vw,1rem)] leading-tight mb-1;
+            }
+
+            h1::after {
+                content: '';
+                @apply block w-16 h-0.5 bg-gradient-to-r from-primary to-secondary mt-2 rounded-full;
+            }
+
+            h2::after {
+                content: '';
+                @apply block w-14 h-0.5 bg-gradient-to-r from-primary/80 to-secondary/80 mt-1.5 rounded-full;
+            }
+
+            h3::after {
+                content: '';
+                @apply block w-12 h-0.5 bg-primary/70 mt-1 rounded-full;
+            }
+
+            /* 深色模式样式 */
+            .dark h1::after {
+                @apply bg-gradient-to-r from-primary to-secondary/80;
+            }
+
+            .dark h2::after {
+                @apply bg-gradient-to-r from-primary/90 to-secondary/70;
+            }
+
+            .dark h3::after {
+                @apply bg-primary/80;
+            }
+
+            hr {
+                @apply h-px bg-gradient-to-r from-transparent via-gray-200 to-transparent dark:via-gray-700;
+            }
+
+            /* 响应式调整 */
+            @media (max-width: 640px) {
+                hr {
+                    @apply my-6;
+                }
+            }
+
+            /* 与标题组合使用时的特殊处理 */
+            h1 + hr, h2 + hr, h3 + hr {
+                @apply mt-4;
+            }
+
+            hr + h1, hr + h2, hr + h3 {
+                @apply mt-6;
+            }
+        }
+
+        @keyframes messageAppear {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
 <body class="font-inter bg-gray-50 text-gray-800 h-screen flex flex-col overflow-hidden">
 
 <!-- 分享弹窗 -->
-<div id="share-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center transition-opacity duration-300">
+<div id="share-modal"
+     class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center transition-opacity duration-300">
     <div id="share-container"
          class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 share-popup transform transition-all duration-300 scale-95 opacity-0">
         <div class="flex justify-between items-center mb-4">
@@ -64,7 +217,8 @@
 </div>
 
 <!-- 创建会话弹窗 -->
-<div id="create-chat-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center transition-opacity duration-300">
+<div id="create-chat-modal"
+     class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center transition-opacity duration-300">
     <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0"
          id="create-chat-container">
         <div class="flex justify-between items-center mb-6">
@@ -194,8 +348,10 @@
 </div>
 
 <!-- 编辑会话弹窗 -->
-<div id="edit-ai-modal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center transition-opacity duration-300">
-    <div id="edit-ai-container" class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0">
+<div id="edit-ai-modal"
+     class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center transition-opacity duration-300">
+    <div id="edit-ai-container"
+         class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-semibold">编辑AI会话</h3>
             <button id="close-edit-ai" class="text-gray-500 hover:text-gray-700">
@@ -227,7 +383,8 @@
                 <div class="flex">
                     <input type="text" id="edit-api-key" value="sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
                            class="flex-1 px-4 py-2.5 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all">
-                    <button id="copy-api-key" class="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-r-lg hover:bg-gray-200 transition-colors">
+                    <button id="copy-api-key"
+                            class="bg-gray-100 text-gray-700 px-4 py-2.5 rounded-r-lg hover:bg-gray-200 transition-colors">
                         <i class="fa fa-copy mr-1"></i>复制
                     </button>
                 </div>
@@ -235,20 +392,28 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-2">System Set</label>
-                <textarea id="edit-sys-set" rows="4" class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"></textarea>
+                <textarea id="edit-sys-set" rows="4"
+                          class="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all"></textarea>
             </div>
         </div>
 
         <div class="flex justify-end mt-6 space-x-3">
-            <button id="cancel-edit-ai" class="px-5 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">取消</button>
-            <button id="confirm-edit-ai" class="px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg">保存修改</button>
+            <button id="cancel-edit-ai"
+                    class="px-5 py-2.5 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors">取消
+            </button>
+            <button id="confirm-edit-ai"
+                    class="px-5 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg">
+                保存修改
+            </button>
         </div>
     </div>
 </div>
 
 <!-- 登录注册弹窗 -->
-<div id="auth-popup" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center transition-opacity duration-300">
-    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0" id="auth-container">
+<div id="auth-popup"
+     class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center transition-opacity duration-300">
+    <div class="bg-white rounded-xl shadow-2xl p-6 max-w-md w-full mx-4 transform transition-all duration-300 scale-95 opacity-0"
+         id="auth-container">
         <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-semibold">账户登录</h3>
             <button id="close-auth" class="text-gray-500 hover:text-gray-700 transition-colors">
@@ -262,7 +427,8 @@
                 <button id="login-tab" class="auth-tab py-2 px-1 border-b-2 border-primary text-primary font-medium">
                     登录
                 </button>
-                <button id="register-tab" class="auth-tab py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
+                <button id="register-tab"
+                        class="auth-tab py-2 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 transition-colors">
                     注册
                 </button>
             </div>
@@ -295,7 +461,8 @@
                 <button type="button" class="text-sm text-primary hover:underline">忘记密码？</button>
             </div>
 
-            <button type="button" id="login-btn" class="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg flex items-center justify-center">
+            <button type="button" id="login-btn"
+                    class="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg flex items-center justify-center">
                 <i class="fa fa-sign-in mr-2"></i> 登录
             </button>
         </div>
@@ -339,40 +506,48 @@
                     <i class="fa fa-key text-gray-400 w-5"></i>
                     <input type="text" id="register-code" placeholder="请输入验证码" required maxlength="6"
                            class="flex-1 px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-primary/50 focus:border-primary transition-all duration-200">
-                    <button type="button" id="get-code" class="bg-gray-100 text-gray-700 px-4 py-2 rounded-r-lg hover:bg-gray-200 transition-colors whitespace-nowrap">
+                    <button type="button" id="get-code"
+                            class="bg-gray-100 text-gray-700 px-4 py-2 rounded-r-lg hover:bg-gray-200 transition-colors whitespace-nowrap">
                         获取验证码
                     </button>
                 </div>
             </div>
 
             <div class="mb-6 flex items-center">
-                <input type="checkbox" id="agree-terms" class="h-4 w-4 text-primary focus:ring-primary/50 border-gray-300 rounded" required>
-                <label for="agree-terms" class="ml-2 text-sm text-gray-700">我已阅读并同意 <a href="#" class="text-primary hover:underline">用户协议</a> 和 <a href="#" class="text-primary hover:underline">隐私政策</a></label>
+                <input type="checkbox" id="agree-terms"
+                       class="h-4 w-4 text-primary focus:ring-primary/50 border-gray-300 rounded" required>
+                <label for="agree-terms" class="ml-2 text-sm text-gray-700">我已阅读并同意 <a href="#"
+                                                                                              class="text-primary hover:underline">用户协议</a>
+                    和 <a href="#" class="text-primary hover:underline">隐私政策</a></label>
             </div>
 
-            <button type="button" id="register-btn" class="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg flex items-center justify-center">
+            <button type="button" id="register-btn"
+                    class="w-full py-3 bg-primary text-white rounded-lg font-medium hover:bg-primary/90 transition-colors shadow-md hover:shadow-lg flex items-center justify-center">
                 <i class="fa fa-user-plus mr-2"></i> 注册
             </button>
         </div>
 
         <div class="text-center text-sm text-gray-500 mt-6">
-            <p id="switch-to-login" class="hidden cursor-pointer hover:text-primary transition-colors">已有账号？<span class="ml-1">立即登录</span></p>
-            <p id="switch-to-register" class="cursor-pointer hover:text-primary transition-colors mt-1">还未注册？<span class="ml-1">立即注册</span></p>
+            <p id="switch-to-login" class="hidden cursor-pointer hover:text-primary transition-colors">已有账号？<span
+                    class="ml-1">立即登录</span></p>
+            <p id="switch-to-register" class="cursor-pointer hover:text-primary transition-colors mt-1">还未注册？<span
+                    class="ml-1">立即注册</span></p>
         </div>
     </div>
 </div>
 
+<!-- 主区域 -->
 <div class="flex h-full">
     <!-- 左侧边栏 -->
-    <div>
+    <div class="w-[15%]">
         <div class="p-4 border-b border-gray-200 flex justify-between items-center">
-            <h2 class="font-semibold text-lg">AI Chat</h2>
+            <span class="font-semibold text-lg">AI Chat</span>
             <button id="toggle-sidebar" class="p-2 rounded-full hover:bg-gray-100 btn-hover">
                 <i class="fa fa-times"></i>
             </button>
         </div>
         <div id="sidebar"
-             class="w-64 bg-white border-r border-gray-200 h-full flex flex-col sidebar-slide transform-transition duration-300">
+             class="bg-white border-r border-gray-200 h-full flex flex-col sidebar-slide transform-transition duration-300">
             <!-- 新建聊天和AI选择 -->
             <div class="p-4">
                 <button id="new-chat-btn"
@@ -381,67 +556,67 @@
                 </button>
 
                 <div class="mb-4">
-                    <h3 class="text-sm font-medium text-gray-500 mb-2">AI 助手</h3>
+                    <span class="text-sm font-medium text-gray-500 mb-2">AI</span>
                     <div class="space-y-2" id="single-ai-area"></div>
                 </div>
 
                 <div>
-                    <h3 class="text-sm font-medium text-gray-500 mb-2">群聊</h3>
+                    <span class="text-sm font-medium text-gray-500 mb-2">群聊</span>
                     <div class="space-y-2" id="ai-group-area"></div>
                 </div>
             </div>
 
             <!-- 聊天历史记录 -->
             <div class="flex-1 overflow-y-auto scrollbar-hide p-2">
-                <h3 class="text-sm font-medium text-gray-500 mb-2 px-2">最近聊天</h3>
-<!--                <div class="space-y-1" id="recent-history-area">-->
-<!--                    <div class="p-2 rounded-lg bg-primary/5 cursor-pointer">-->
-<!--                        <div class="flex items-center">-->
-<!--                            <img src="https://picsum.photos/200/200?random=1" alt="AI助手1"-->
-<!--                                 class="w-8 h-8 rounded-full mr-3">-->
-<!--                            <div>-->
-<!--                                <div class="flex justify-between">-->
-<!--                                    <h4 class="font-medium">智能助手</h4>-->
-<!--                                    <span class="text-xs text-gray-500">10:23</span>-->
-<!--                                </div>-->
-<!--                                <p class="text-xs text-gray-600 truncate w-40">-->
-<!--                                    你好！我是智能助手，有什么可以帮助你的吗？</p>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
+                <span class="text-sm font-medium text-gray-500 mb-2 px-2">最近聊天</span>
+                <!--                <div class="space-y-1" id="recent-history-area">-->
+                <!--                    <div class="p-2 rounded-lg bg-primary/5 cursor-pointer">-->
+                <!--                        <div class="flex items-center">-->
+                <!--                            <img src="https://picsum.photos/200/200?random=1" alt="AI助手1"-->
+                <!--                                 class="w-8 h-8 rounded-full mr-3">-->
+                <!--                            <div>-->
+                <!--                                <div class="flex justify-between">-->
+                <!--                                    <h4 class="font-medium">智能助手</h4>-->
+                <!--                                    <span class="text-xs text-gray-500">10:23</span>-->
+                <!--                                </div>-->
+                <!--                                <p class="text-xs text-gray-600 truncate w-40">-->
+                <!--                                    你好！我是智能助手，有什么可以帮助你的吗？</p>-->
+                <!--                            </div>-->
+                <!--                        </div>-->
+                <!--                    </div>-->
 
-<!--                    <div class="p-2 rounded-lg hover:bg-gray-100 cursor-pointer">-->
-<!--                        <div class="flex items-center">-->
-<!--                            <div class="flex -space-x-2">-->
-<!--                                <img src="https://picsum.photos/200/200?random=1" alt="AI助手1"-->
-<!--                                     class="w-8 h-8 rounded-full border-2 border-white">-->
-<!--                                <img src="https://picsum.photos/200/200?random=2" alt="AI助手2"-->
-<!--                                     class="w-8 h-8 rounded-full border-2 border-white">-->
-<!--                            </div>-->
-<!--                            <div class="ml-3">-->
-<!--                                <div class="flex justify-between">-->
-<!--                                    <h4 class="font-medium">开发团队</h4>-->
-<!--                                    <span class="text-xs text-gray-500">昨天</span>-->
-<!--                                </div>-->
-<!--                                <p class="text-xs text-gray-600 truncate w-40">代码已经完成了初步优化</p>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
+                <!--                    <div class="p-2 rounded-lg hover:bg-gray-100 cursor-pointer">-->
+                <!--                        <div class="flex items-center">-->
+                <!--                            <div class="flex -space-x-2">-->
+                <!--                                <img src="https://picsum.photos/200/200?random=1" alt="AI助手1"-->
+                <!--                                     class="w-8 h-8 rounded-full border-2 border-white">-->
+                <!--                                <img src="https://picsum.photos/200/200?random=2" alt="AI助手2"-->
+                <!--                                     class="w-8 h-8 rounded-full border-2 border-white">-->
+                <!--                            </div>-->
+                <!--                            <div class="ml-3">-->
+                <!--                                <div class="flex justify-between">-->
+                <!--                                    <h4 class="font-medium">开发团队</h4>-->
+                <!--                                    <span class="text-xs text-gray-500">昨天</span>-->
+                <!--                                </div>-->
+                <!--                                <p class="text-xs text-gray-600 truncate w-40">代码已经完成了初步优化</p>-->
+                <!--                            </div>-->
+                <!--                        </div>-->
+                <!--                    </div>-->
 
-<!--                    <div class="p-2 rounded-lg hover:bg-gray-100 cursor-pointer">-->
-<!--                        <div class="flex items-center">-->
-<!--                            <img src="https://picsum.photos/200/200?random=3" alt="AI助手3"-->
-<!--                                 class="w-8 h-8 rounded-full mr-3">-->
-<!--                            <div>-->
-<!--                                <div class="flex justify-between">-->
-<!--                                    <h4 class="font-medium">创作助手</h4>-->
-<!--                                    <span class="text-xs text-gray-500">周一</span>-->
-<!--                                </div>-->
-<!--                                <p class="text-xs text-gray-600 truncate w-40">这是为你生成的诗歌：《晨光》</p>-->
-<!--                            </div>-->
-<!--                        </div>-->
-<!--                    </div>-->
-<!--                </div>-->
+                <!--                    <div class="p-2 rounded-lg hover:bg-gray-100 cursor-pointer">-->
+                <!--                        <div class="flex items-center">-->
+                <!--                            <img src="https://picsum.photos/200/200?random=3" alt="AI助手3"-->
+                <!--                                 class="w-8 h-8 rounded-full mr-3">-->
+                <!--                            <div>-->
+                <!--                                <div class="flex justify-between">-->
+                <!--                                    <h4 class="font-medium">创作助手</h4>-->
+                <!--                                    <span class="text-xs text-gray-500">周一</span>-->
+                <!--                                </div>-->
+                <!--                                <p class="text-xs text-gray-600 truncate w-40">这是为你生成的诗歌：《晨光》</p>-->
+                <!--                            </div>-->
+                <!--                        </div>-->
+                <!--                    </div>-->
+                <!--                </div>-->
             </div>
         </div>
     </div>
@@ -449,16 +624,16 @@
     <!-- 主内容区 -->
     <div id="main-content" class="flex-1 flex flex-col bg-gray-50 transition-all duration-300">
         <!-- 聊天头部 -->
-        <div class="bg-white border-b border-gray-200 p-4 flex justify-between items-center">
+        <div class="w-[85%] backdrop-blur-sm bg-white/60 dark:bg-gray-800/80 border-b border-gray-200/50 dark:border-gray-700/50 p-4 flex justify-between items-center shadow-[0_4px_12px_-2px_rgba(0,0,0,0.15)] transition-all duration-300 fixed top-0 z-10">
             <div class="flex items-center">
                 <div class="flex -space-x-2 mr-3">
-                    <img src="https://picsum.photos/200/200?random=1" alt="AI助手1"
+                    <img src="https://picsum.photos/200/200?random=1" alt="p1"
                          class="w-8 h-8 rounded-full border-2 border-white">
-                    <img src="https://picsum.photos/200/200?random=2" alt="AI助手2"
+                    <img src="https://picsum.photos/200/200?random=2" alt="p2"
                          class="w-8 h-8 rounded-full border-2 border-white">
                 </div>
                 <div class="relative">
-                    <h1 id="chat-title" class="font-semibold text-lg cursor-pointer hover:text-primary"></h1>
+                    <span id="chat-title" class="font-semibold text-lg cursor-pointer hover:text-primary"></span>
                     <input type="text" id="edit-title"
                            class="absolute -top-1 -left-1 w-40 py-1 px-2 border border-primary rounded-md hidden"
                            value="">
@@ -467,39 +642,40 @@
                     <span class="animate-pulse"> &nbsp;&nbsp;正在输入...</span>
                 </div>
             </div>
-            <div class="flex items-center space-x-1"> <!-- 调整右侧布局为间距1 -->
+
+            <div class="flex items-center">
                 <button id="share-btn" class="p-2 rounded-full hover:bg-gray-100 text-gray-600 btn-hover relative">
                     <i class="fa fa-share-alt"></i>
                 </button>
 
-                <!-- 登录注册按钮 -->
                 <div class="relative">
-                    <button id="auth-btn" class="p-2 rounded-full hover:bg-gray-100 text-gray-600 btn-hover relative overflow-hidden group">
+                    <button id="auth-btn"
+                            class="p-2 rounded-full hover:bg-gray-100 text-gray-600 btn-hover relative overflow-hidden group">
                         <!-- 正常状态图标 -->
                         <i class="fa fa-user-o transition-transform duration-300 group-hover:scale-110"></i>
 
                         <!-- 加载状态图标 (默认隐藏) -->
-                        <i id="auth-loading" class="fa fa-spinner fa-spin absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 text-gray-600"></i>
-
-                        <!-- 提示文本 (悬停显示) -->
-                        <span class="absolute -bottom-8 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                    登录/注册
-                </span>
+                        <i id="auth-loading"
+                           class="fa fa-spinner fa-spin absolute inset-0 flex items-center justify-center opacity-0 transition-opacity duration-300 text-gray-600"></i>
                     </button>
-
                     <!-- 登录注册下拉菜单 (默认隐藏) -->
-                    <div id="auth-menu" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10 opacity-0 invisible transition-all duration-200 transform translate-y-2">
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors">
+                    <div id="auth-menu"
+                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg py-1 z-10 opacity-0 invisible transition-all duration-200 transform translate-y-2">
+                        <a href="#"
+                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors">
                             <i class="fa fa-sign-in mr-2"></i> 登录
                         </a>
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors">
+                        <a href="#"
+                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors">
                             <i class="fa fa-user-plus mr-2"></i> 注册
                         </a>
                         <div class="border-t border-gray-100 my-1"></div>
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors">
+                        <a href="#"
+                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors">
                             <i class="fa fa-question-circle mr-2"></i> 帮助中心
                         </a>
-                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors">
+                        <a href="#"
+                           class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 hover:text-primary transition-colors">
                             <i class="fa fa-sign-out mr-2"></i> 退出登录
                         </a>
                     </div>
@@ -531,9 +707,6 @@
     </div>
 </div>
 
-<!--<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/prism.min.js"></script>-->
-<!--<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-python.min.js"></script>-->
-<!--<script src="https://cdn.jsdelivr.net/npm/prismjs@1.29.0/components/prism-javascript.min.js"></script>-->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/javascript.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/languages/python.min.js"></script>

@@ -33,7 +33,7 @@ function cookieVerify(){
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    loadSessionDatas(data.data);
+                    loadSessionDatas(data.aiConfigs);
                 } else {
                     alert('Cookie 验证失败，请重新登录！');
                     setUserCookie(null, 0);
@@ -195,9 +195,8 @@ function hideLoadingStateInButton(button) {
     button.innerHTML = loadingStateButtonRecord;
 }
 
-function loadSessionDatas(sessionData) {
-    for (const key in sessionData.ais) {
-        const ai = sessionData.ais[key];
+function loadSessionDatas(aiConfigs) {
+    for (const ai of aiConfigs) {
         addAIByObj(ai);
     }
 }
@@ -228,6 +227,10 @@ document.getElementById('login-btn').addEventListener('click', () => {
 
     showLoadingStateInButton(document.getElementById('login-btn'));
     showLoadingState();
+    const hideLoading = () => {
+        hideLoadingStateInButton(document.getElementById('login-btn'));
+        hideLoadingState();
+    };
     fetch(serverURL + '/login', {
         method: 'POST',
         headers: {
@@ -241,10 +244,14 @@ document.getElementById('login-btn').addEventListener('click', () => {
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
-                hasLogin = true;
-                setUserCookie(username);
-                loadSessionDatas(data.sessionData);
-                closeAuthPopup();
+                setTimeout(() => {
+                    hasLogin = true;
+                    setUserCookie(username);
+                    console.log(data);
+                    loadSessionDatas(data.aiConfigs);
+                    closeAuthPopup();
+                    hideLoading();
+                }, 500);
             } else if (data.status === 'error') {
                 if (data.cause === 'PasswordError') {
                     alert('密码错误');
@@ -255,16 +262,15 @@ document.getElementById('login-btn').addEventListener('click', () => {
                         switchTab(registerTab, loginTab, registerForm, loginForm, loginTabWord, registerTabWord);
                     }
                 } else {
-                    alert('登录失败，可能是服务器出现异常，请稍后再试！');
+                    alert(`登录失败，可能是服务器出现异常，请稍后再试！\nError: ${data.cause}`);
                 }
+                hideLoading();
             }
         })
         .catch(error => {
             console.error("请求错误：", error);
-        })
-        .finally(() => {
-            hideLoadingStateInButton(document.getElementById('login-btn'));
-            hideLoadingState();
+            alert(`登录失败，可能是服务器出现异常，请稍后再试！\nError: ${error.message}`);
+            hideLoading();
         })
 });
 
